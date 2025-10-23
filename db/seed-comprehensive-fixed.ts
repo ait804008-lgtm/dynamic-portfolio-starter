@@ -3,32 +3,59 @@ import { users, projects, experience, education, skills, projectSkills, blogPost
 import { nanoid } from 'nanoid';
 import { eq } from 'drizzle-orm';
 
-async function seedComprehensive() {
-  console.log('🌱 Starting comprehensive database seeding...');
+async function seedComprehensiveFixed() {
+  console.log('🌱 Starting comprehensive database seeding with conflict resolution...');
 
   try {
-    // Create multiple users for realistic data
-    console.log('Creating users...');
-    const adminUser = await db.insert(users).values({
-      id: nanoid(),
-      email: 'admin@portfolio.com',
-      name: 'Portfolio Admin',
-      password: '$2a$10$rOzJqQjQjQjQjQjQjQjQjOzJqQjQjQjQjQjQjQjQjQjQjQjQ', // hashed 'password'
-      role: 'admin',
-      bio: 'Full Stack Developer passionate about creating amazing web applications',
-    }).returning();
+    // Check for existing users and reuse if found
+    console.log('Checking for existing users...');
 
-    const contentCreator = await db.insert(users).values({
-      id: nanoid(),
-      email: 'creator@portfolio.com',
-      name: 'Content Creator',
-      password: '$2a$10$rOzJqQjQjQjQjQjQjQjQjOzJqQjQjQjQjQjQjQjQjQjQjQjQ', // hashed 'password'
-      role: 'admin',
-      bio: 'Content creator and UX enthusiast with a passion for clean design',
-    }).returning();
+    let adminUser;
+    let userId: string;
+    let contentCreator;
+    let creatorId: string;
 
-    const userId = adminUser[0].id;
-    const creatorId = contentCreator[0].id;
+    // Check for existing admin user
+    const existingAdmin = await db.select().from(users).where(eq(users.email, 'admin@portfolio.com')).limit(1);
+
+    if (existingAdmin.length > 0) {
+      console.log('Admin user already exists, reusing existing user...');
+      adminUser = existingAdmin;
+      userId = adminUser[0].id;
+    } else {
+      // Create admin user if doesn't exist
+      console.log('Creating admin user...');
+      adminUser = await db.insert(users).values({
+        id: nanoid(),
+        email: 'admin@portfolio.com',
+        name: 'Portfolio Admin',
+        password: '$2a$10$rOzJqQjQjQjQjQjOzJqQjQjQjQjQjQjQjQjQjQjQjQjQjQ', // hashed 'password'
+        role: 'admin',
+        bio: 'Full Stack Developer passionate about creating amazing web applications',
+      }).returning();
+      userId = adminUser[0].id;
+    }
+
+    // Check for existing content creator user
+    const existingCreator = await db.select().from(users).where(eq(users.email, 'creator@portfolio.com')).limit(1);
+
+    if (existingCreator.length > 0) {
+      console.log('Content creator already exists, reusing existing user...');
+      contentCreator = existingCreator;
+      creatorId = contentCreator[0].id;
+    } else {
+      // Create content creator user if doesn't exist
+      console.log('Creating content creator user...');
+      contentCreator = await db.insert(users).values({
+        id: nanoid(),
+        email: 'creator@portfolio.com',
+        name: 'Content Creator',
+        password: '$2a$10$rOzJqQjQjQjQjQjQjOzJqQjQjQjQjQjQjQjQjQjQjQjQjQjQ', // hashed 'password'
+        role: 'admin',
+        bio: 'Content creator and UX enthusiast with a passion for clean design',
+      }).returning();
+      creatorId = contentCreator[0].id;
+    }
 
     // Create comprehensive personal info for main user
     console.log('Creating personal info...');
@@ -350,9 +377,9 @@ async function seedComprehensive() {
         slug: 'data-analytics-dashboard',
         description: 'Interactive dashboard for data visualization and business intelligence with real-time metrics.',
         longDescription: 'Advanced analytics dashboard providing real-time business insights, customizable charts, and automated reporting. Integrates with multiple data sources and provides actionable insights through machine learning-powered recommendations.',
-        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-be9c690be2db?w=800&h=400&fit=crop',
         images: JSON.stringify([
-          'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop'
+          'https://images.unsplash.com/photo-1551288049-be9c690be2db?w=800&h=400&fit=crop'
         ]),
         technologies: JSON.stringify(['Vue.js', 'D3.js', 'Python', 'FastAPI', 'PostgreSQL', 'Docker']),
         projectUrl: 'https://analytics.example.com',
@@ -459,7 +486,44 @@ const config = new ConfigBuilder()
   .build();
 \`\`\`
 
-These patterns help maintain clean architecture and testability in large applications.`,
+## Practical Implementation
+
+### Semantic HTML
+\`\`\`html
+<!-- Use semantic elements -->
+<nav aria-label="Main navigation">
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+  </ul>
+</nav>
+
+<main role="main">
+  <section aria-labelledby="about-heading">
+    <h2 id="about-heading">About Us</h2>
+    <p>Content here...</p>
+  </section>
+</main>
+\`\`\`
+
+### ARIA Attributes
+\`\`\`html
+<button
+  aria-expanded="false"
+  aria-controls="menu"
+  aria-label="Toggle navigation menu">
+  Menu
+</button>
+\`\`\`
+
+## Testing Your Accessibility
+
+Use these tools to test your applications:
+- WAVE Web Accessibility Evaluation Tool
+- axe DevTools browser extension
+- Screen reader testing with NVDA or VoiceOver
+
+Remember: accessibility is a continuous process, not a one-time task.`,
         featuredImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e404f3?w=800&h=400&fit=crop',
         authorId: userId,
         tags: JSON.stringify(['TypeScript', 'Architecture', 'Patterns', 'Enterprise']),
@@ -786,7 +850,7 @@ Key metrics to monitor:
 - Time to Interactive (TTI)
 - Cumulative Layout Shift (CLS)
 
-Performance optimization is an ongoing process. Regular monitoring and optimization ensure the best user experience.`,
+Performance optimization is an ongoing process. Regular monitoring and optimization ensure best user experience.`,
         featuredImage: 'https://images.unsplash.com/photo-1553481187-be9c690be2db?w=800&h=400&fit=crop',
         authorId: userId,
         tags: JSON.stringify(['React', 'Performance', 'Optimization', 'JavaScript']),
@@ -912,7 +976,7 @@ services:
 - Project delivery consistency
 - Communication effectiveness
 
-Remote work requires intentional effort in communication and culture building, but the flexibility and global talent access make it worthwhile.`,
+Remote work requires intentional effort in communication and culture building, but flexibility and global talent access make it worthwhile.`,
         featuredImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e404f3?w=800&h=400&fit=crop',
         authorId: creatorId,
         tags: JSON.stringify(['Remote Work', 'Team Management', 'Productivity', 'Culture']),
@@ -997,6 +1061,7 @@ Remote work requires intentional effort in communication and culture building, b
         email: 'emily.r@design.co',
         subject: 'Design System Collaboration',
         message: 'Hi Jane! Your design system work is fantastic. I\'m leading a design team at a growing startup and we\'re looking to implement a comprehensive design system. Would you be interested in consulting or collaboration?',
+        phone: '+1 (555) 234-5678',
         company: 'DesignCo',
         newsletter: true,
         source: 'Dribbble',
@@ -1021,7 +1086,8 @@ Remote work requires intentional effort in communication and culture building, b
         name: 'Lisa Park',
         email: 'lisa.park@freelance.io',
         subject: 'Project collaboration inquiry',
-        message: 'I\'m a freelance UX designer and I love your approach to accessibility. I have a client looking for both design and development work and thought we might be able to collaborate on the project. Would you be open to discussing this?',
+        message: 'I\'m a freelance UX designer and I love your approach to accessibility. I have a client looking for both design and development work and thought we might be able to collaborate on a project. Would you be open to discussing this?',
+        phone: '+1 (555) 345-6789',
         company: 'Freelance',
         newsletter: false,
         source: 'Referral',
@@ -1049,17 +1115,17 @@ Remote work requires intentional effort in communication and culture building, b
 }
 
 // Export the function
-export { seedComprehensive };
+export { seedComprehensiveFixed };
 
 // Run the seed function if this file is executed directly
 if (require.main === module) {
-  seedComprehensive()
+  seedComprehensiveFixed()
     .then(() => {
-      console.log('🎉 Seeding completed successfully!');
+      console.log('🎉 Comprehensive seeding completed successfully!');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Seeding failed:', error);
+      console.error('❌ Comprehensive seeding failed:', error);
       process.exit(1);
     });
 }
