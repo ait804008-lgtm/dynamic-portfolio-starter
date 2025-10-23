@@ -44,7 +44,7 @@ interface ProjectResponse {
 }
 
 async function getProject(slug: string): Promise<Project | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
 
   try {
     // First, try to find project by slug by searching all projects
@@ -69,20 +69,8 @@ async function getProject(slug: string): Promise<Project | null> {
       return null;
     }
 
-    // Get full project details using the project ID
-    const projectResponse = await fetch(`${baseUrl}/api/projects/${foundProject.id}`, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!projectResponse.ok) {
-      throw new Error('Failed to fetch project details');
-    }
-
-    const projectData = await projectResponse.json();
-    return projectData.data?.project || null;
+    // Return the found project directly since it already contains all necessary data
+    return foundProject;
   } catch (error) {
     console.error('Error fetching project:', error);
     return null;

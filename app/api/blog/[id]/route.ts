@@ -4,8 +4,9 @@ import { blogPosts, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { withErrorHandler, requireAuth, validateMethod, parseRequestBody, createApiResponse, blogSchemas } from '@/lib/api-utils';
 
-export const GET = withErrorHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
-  const { id } = params;
+export const GET = withErrorHandler(async (req: NextRequest, context: { params?: Promise<{ id: string }> | { id: string } }) => {
+  const params = await (context?.params || {});
+  const id = params.id;
 
   const result = await db
     .select({

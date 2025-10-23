@@ -74,7 +74,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   // Search filter
   if (search) {
     query = query.where(
-      sql`(${ilike(blogPosts.title, `%${search}%`)} OR ${ilike(blogPosts.excerpt, `%${search}%`)})`
+      sql`(${ilike(blogPosts.title, `%${search}%`)} OR ${ilike(blogPosts.excerpt, `%${search}%`)} OR ${ilike(blogPosts.slug, `%${search}%`)})`
     );
   }
 
@@ -104,7 +104,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
   if (search) {
     countQuery = countQuery.where(
-      sql`(${ilike(blogPosts.title, `%${search}%`)} OR ${ilike(blogPosts.excerpt, `%${search}%`)})`
+      sql`(${ilike(blogPosts.title, `%${search}%`)} OR ${ilike(blogPosts.excerpt, `%${search}%`)} OR ${ilike(blogPosts.slug, `%${search}%`)})`
     );
   }
 

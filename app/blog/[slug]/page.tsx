@@ -40,7 +40,7 @@ interface BlogPostResponse {
 }
 
 async function getBlogPost(slug: string): Promise<BlogPost | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
 
   try {
     // First, try to find the post by slug by searching all posts
@@ -65,20 +65,8 @@ async function getBlogPost(slug: string): Promise<BlogPost | null> {
       return null;
     }
 
-    // Get full post details using the post ID
-    const postResponse = await fetch(`${baseUrl}/api/blog/${foundPost.id}`, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!postResponse.ok) {
-      throw new Error('Failed to fetch blog post details');
-    }
-
-    const postData = await postResponse.json();
-    return postData.data?.post || null;
+    // Return the found post directly since it already contains all necessary data
+    return foundPost;
   } catch (error) {
     console.error('Error fetching blog post:', error);
     return null;
