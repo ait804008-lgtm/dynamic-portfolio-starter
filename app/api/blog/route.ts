@@ -10,10 +10,10 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
   // Parse pagination parameters
   const paginationParams = commonSchemas.pagination.parse({
-    page: searchParams.get('page'),
-    limit: searchParams.get('limit'),
-    search: searchParams.get('search'),
-    sort: searchParams.get('sort'),
+    page: searchParams.get('page') || '1',
+    limit: searchParams.get('limit') || '10',
+    search: searchParams.get('search') || '',
+    sort: searchParams.get('sort') || 'desc',
   });
 
   const { page, limit, search, sort } = paginationParams;
@@ -55,33 +55,27 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     .leftJoin(users, eq(blogPosts.authorId, users.id));
 
   // Apply filters
-  const conditions = [];
-
   // Only show published posts unless user is authenticated
   const session = await requireAuth(req);
   if (!session) {
-    conditions.push(eq(blogPosts.published, true));
+    query = query.where(eq(blogPosts.published, true));
   } else if (published) {
-    conditions.push(eq(blogPosts.published, published));
+    query = query.where(eq(blogPosts.published, published));
   }
 
   if (featured) {
-    conditions.push(eq(blogPosts.featured, true));
+    query = query.where(eq(blogPosts.featured, true));
   }
 
   if (category) {
-    conditions.push(eq(blogPosts.category, category));
+    query = query.where(eq(blogPosts.category, category));
   }
 
   // Search filter
   if (search) {
-    conditions.push(
+    query = query.where(
       sql`(${ilike(blogPosts.title, `%${search}%`)} OR ${ilike(blogPosts.excerpt, `%${search}%`)})`
     );
-  }
-
-  if (conditions.length > 0) {
-    query = query.where(sql`${conditions.join(' AND ')}`);
   }
 
   // Apply sorting
@@ -89,12 +83,29 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   query = query.orderBy(orderClause);
 
   // Get total count for pagination
-  const countQuery = db
+  let countQuery = db
     .select({ count: sql<number>`count(*)` })
     .from(blogPosts);
 
-  if (conditions.length > 0) {
-    countQuery.where(sql`${conditions.join(' AND ')}`);
+  // Apply same filters as main query
+  if (!session) {
+    countQuery = countQuery.where(eq(blogPosts.published, true));
+  } else if (published) {
+    countQuery = countQuery.where(eq(blogPosts.published, published));
+  }
+
+  if (featured) {
+    countQuery = countQuery.where(eq(blogPosts.featured, true));
+  }
+
+  if (category) {
+    countQuery = countQuery.where(eq(blogPosts.category, category));
+  }
+
+  if (search) {
+    countQuery = countQuery.where(
+      sql`(${ilike(blogPosts.title, `%${search}%`)} OR ${ilike(blogPosts.excerpt, `%${search}%`)})`
+    );
   }
 
   const totalCount = await countQuery;
