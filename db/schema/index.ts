@@ -8,7 +8,7 @@ import { blogPosts } from './blog';
 import { contactMessages } from './contact';
 import { personalInfo } from './personal-info';
 import { siteSettings } from './site-settings';
-import { relations } from 'drizzle-orm';
+import { relations as drizzleRelations } from 'drizzle-orm';
 
 // Export all tables
 export {
@@ -51,7 +51,7 @@ export const schema = {
 };
 
 // Relations
-export const relations = relations(users, ({ many }) => ({
+export const relations = drizzleRelations(users, ({ many }) => ({
   projects: many(projects),
   experience: many(experience),
   education: many(education),
