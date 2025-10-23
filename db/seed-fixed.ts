@@ -3,22 +3,34 @@ import { users, projects, experience, education, skills, projectSkills, blogPost
 import { nanoid } from 'nanoid';
 import { eq } from 'drizzle-orm';
 
-async function seed() {
-  console.log('🌱 Starting database seeding...');
+async function seedFixed() {
+  console.log('🌱 Starting database seeding with conflict resolution...');
 
   try {
-    // Create admin user
-    console.log('Creating admin user...');
-    const adminUser = await db.insert(users).values({
-      id: nanoid(),
-      email: 'admin@portfolio.com',
-      name: 'Portfolio Admin',
-      password: '$2a$10$rOzJqQjQjQjQjQjQjQjQjOzJqQjQjQjQjQjQjQjQjQjQjQjQjQjQjQ', // hashed 'password'
-      role: 'admin',
-      bio: 'Full Stack Developer passionate about creating amazing web applications',
-    }).returning();
+    // Check if admin user already exists
+    console.log('Checking for existing admin user...');
+    const existingAdmin = await db.select().from(users).where(eq(users.email, 'admin@portfolio.com')).limit(1);
 
-    const userId = adminUser[0].id;
+    let adminUser;
+    let userId: string;
+
+    if (existingAdmin.length > 0) {
+      console.log('Admin user already exists, reusing existing user...');
+      adminUser = existingAdmin;
+      userId = adminUser[0].id;
+    } else {
+      // Create admin user if doesn't exist
+      console.log('Creating admin user...');
+      adminUser = await db.insert(users).values({
+        id: nanoid(),
+        email: 'admin@portfolio.com',
+        name: 'Portfolio Admin',
+        password: '$2a$10$rOzJqQjQjQjQjQjQjOzJqQjQjQjQjQjQjQjQjQjQjQjQjQjQ', // hashed 'password'
+        role: 'admin',
+        bio: 'Full Stack Developer passionate about creating amazing web applications',
+      }).returning();
+      userId = adminUser[0].id;
+    }
 
     // Create personal info
     console.log('Creating personal info...');
@@ -243,12 +255,15 @@ Use the grid utilities to create responsive layouts...`,
 
 // Run the seed function
 if (require.main === module) {
-  seed()
-    .then(() => process.exit(0))
+  seedFixed()
+    .then(() => {
+      console.log('🎉 Seeding completed successfully!');
+      process.exit(0);
+    })
     .catch((error) => {
-      console.error(error);
+      console.error('❌ Seeding failed:', error);
       process.exit(1);
     });
 }
 
-export { seed };
+export { seedFixed };
