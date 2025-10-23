@@ -1,117 +1,162 @@
-# Project Requirements Document: codeguide-starter
-
----
+# Project Requirements Document (PRD)
 
 ## 1. Project Overview
 
-The **codeguide-starter** project is a boilerplate web application that provides a ready-made foundation for any web project requiring secure user authentication and a post-login dashboard. It sets up the common building blocks—sign-up and sign-in pages, API routes to handle registration and login, and a simple dashboard interface driven by static data. By delivering this skeleton, it accelerates development time and ensures best practices are in place from day one.
+Dynamic Portfolio Starter is a full-stack template built to accelerate the creation of modern, dynamic portfolio websites. Out of the box, it offers secure user authentication, a protected admin panel, database integration, UI component library, and theming support. Developers can plug in their content models (projects, blog posts, experiences, contact messages) and have a production-ready portfolio up and running in minutes.
 
-This starter kit is being built to solve the friction developers face when setting up repeated common tasks: credential handling, session management, page routing, and theming. Key objectives include: 1) delivering a fully working authentication flow (registration & login), 2) providing a gated dashboard area upon successful login, 3) establishing a clear, maintainable project structure using Next.js and TypeScript, and 4) demonstrating a clean theming approach with global and section-specific CSS. Success is measured by having an end-to-end login journey in under 200 lines of code and zero runtime type errors.
+This template is being built to solve the common pain of setting up boilerplate: you don’t need to wire authentication, database, and theming from scratch. The key objectives for this project are:
 
----
+- Provide a unified codebase (Next.js App Router) for both frontend and backend.  
+- Offer prebuilt CRUD interfaces and API routes for managing portfolio data.  
+- Ensure a consistent design system with Tailwind CSS, shadcn/ui, and dark-mode theming.  
+- Make local development easy with Docker, and production deployment seamless with Vercel.
+
+Success will be measured by how quickly a developer can clone the repo, define their schema, and deploy a live portfolio site without writing boilerplate.
 
 ## 2. In-Scope vs. Out-of-Scope
 
-### In-Scope (Version 1)
-- User registration (sign-up) form with validation
-- User login (sign-in) form with validation
-- Next.js API routes under `/api/auth/route.ts` handling:
-  - Credential validation
-  - Password hashing (e.g., bcrypt)
-  - Session creation or JWT issuance
-- Protected dashboard pages under `/dashboard`:
-  - `layout.tsx` wrapping dashboard content
-  - `page.tsx` rendering static data from `data.json`
-- Global application layout in `/app/layout.tsx`
-- Basic styling via `globals.css` and `dashboard/theme.css`
-- TypeScript strict mode enabled
+### In-Scope (V1)
 
-### Out-of-Scope (Later Phases)
-- Integration with a real database (PostgreSQL, MongoDB, etc.)
-- Advanced authentication flows (password reset, email verification, MFA)
-- Role-based access control (RBAC)
-- Multi-tenant or white-label theming
-- Unit, integration, or end-to-end testing suites
-- CI/CD pipeline and production deployment scripts
+- **Next.js App Router**: Single codebase handling pages, layouts, and API routes.  
+- **Authentication**: Sign-up/sign-in flows using Better Auth, session management, and route protection.  
+- **Admin Panel**: `/admin` area with sidebar, data tables, forms for CRUD on Projects, BlogPosts, Experiences, SiteSettings.  
+- **Public Pages**: Home, Projects listing, Blog listing, individual post/project pages, Contact form.  
+- **Database**: PostgreSQL integration via Drizzle ORM. Preconfigured `db/schema` folder for models.  
+- **UI Components & Theming**: Tailwind CSS + shadcn/ui components (Card, Modal, Table, Chart), `next-themes` for light/dark mode.  
+- **Contact Form**: API route to receive submissions, send email via Nodemailer, save to `ContactMessage` table.  
+- **File Uploads**: API route using Formidable to handle image uploads and store on a chosen cloud service.  
+- **Containerization**: Docker Compose for Next.js app and PostgreSQL.  
+- **Deployment**: Vercel configuration for easy production deploy.
 
----
+### Out-of-Scope (Phase 2 or Later)
+
+- Social login providers (Google, GitHub).  
+- Multi-user roles beyond a single admin.  
+- Analytics, search indexing, or CMS integrations.  
+- Internationalization (i18n) support.  
+- Payment processing or e-commerce features.  
+- Advanced caching layers, CDN optimizations beyond defaults.  
+- Dedicated background job queues or microservices.
 
 ## 3. User Flow
 
-A new visitor lands on the root URL and sees a welcome page with options to **Sign Up** or **Sign In**. If they choose Sign Up, they fill in their email, password, and hit “Create Account.” The form submits to `/api/auth/route.ts`, which hashes the password, creates a new user session or token, and redirects them to the dashboard. If any input is invalid, an inline error message explains the issue (e.g., “Password too short”).
+A visitor lands on the public home page and sees a hero banner, navigation links (`Home`, `Projects`, `Blog`, `Contact`), and a theme toggle switch. They click on `Projects` to view a responsive grid of project cards. Each card links to a project detail page with images, descriptions, and links. Next, they navigate to `Blog` to browse posts; clicking a post opens the full article. If they want to get in touch, they go to `Contact`, fill out their name, email, and message, then submit. Behind the scenes, the form calls the `/api/contact` endpoint, stores the message in the database, and an email notification is sent.
 
-Once authenticated, the user is taken to the `/dashboard` route. Here they see a sidebar or header defined by `dashboard/layout.tsx`, and the main panel pulls in static data from `data.json`. They can log out (if that control is present), but otherwise their entire session is managed by server-side cookies or tokens. Returning users go directly to Sign In, submit credentials, and upon success they land back on `/dashboard`. Any unauthorized access to `/dashboard` redirects back to Sign In.
-
----
+An admin user goes to `/admin`. If not signed in, they see a login form (email/password). After authentication via Better Auth, they land on the Admin Dashboard. The dashboard has a sidebar (`Projects`, `Blog Posts`, `Experiences`, `Site Settings`, `Logout`). Clicking `Projects` shows a data table with existing items and an “Add New” button. They click it, fill out fields in a modal (title, description, image upload), and save. The UI sends a POST request to `/api/projects`; server validates the session, writes to PostgreSQL via Drizzle, and returns the new record. The table updates instantly. The admin can also edit or delete items, toggle themes, and log out when finished.
 
 ## 4. Core Features
 
-- **Sign-Up Page (`/app/sign-up/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Sign-In Page (`/app/sign-in/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Authentication API (`/app/api/auth/route.ts`)**: Handles both registration and login based on HTTP method, integrates password hashing (bcrypt) and session or JWT logic.
-- **Global Layout (`/app/layout.tsx` + `globals.css`)**: Shared header, footer, and CSS resets across all pages.
-- **Dashboard Layout (`/app/dashboard/layout.tsx` + `dashboard/theme.css`)**: Sidebar or top nav for authenticated flows, section-specific styling.
-- **Dashboard Page (`/app/dashboard/page.tsx`)**: Reads `data.json`, renders it as cards or tables.
-- **Static Data Source (`/app/dashboard/data.json`)**: Example dataset to demo dynamic rendering.
-- **TypeScript Configuration**: `tsconfig.json` with strict mode and path aliases (if any).
+- **Authentication & Authorization**  
+  • Secure email/password sign-up and sign-in (Better Auth)  
+  • Session handling and protected routes for `/admin` pages and API endpoints
 
----
+- **Admin Dashboard**  
+  • Sidebar navigation: Projects, BlogPosts, Experiences, SiteSettings  
+  • Data tables with sorting, filtering, pagination  
+  • Modal forms for Create, Update, Delete operations
+
+- **Public Portfolio Pages**  
+  • Projects listing and detail views  
+  • Blog listing and article pages  
+  • Contact page with form validation and submission
+
+- **API Routes**  
+  • `/api/auth/*` for authentication flows  
+  • `/api/projects` and `/api/projects/[id]` for CRUD  
+  • `/api/blog` and `/api/blog/[id]`  
+  • `/api/experience` and `/api/contact`  
+  • `/api/uploads` for file/image handling
+
+- **Database Schema**  
+  • Drizzle ORM models: User, Project, BlogPost, Experience, ContactMessage, SiteSettings  
+  • Automated migrations via `drizzle-kit`
+
+- **UI & Theming**  
+  • Tailwind CSS utility-first styling  
+  • shadcn/ui components (Card, Modal, Table, Chart, etc.)  
+  • Dark/light mode switch with `next-themes` and localStorage persistence
+
+- **Containerization & Deployment**  
+  • Docker Compose setup (Next.js + PostgreSQL)  
+  • Vercel deployment config
 
 ## 5. Tech Stack & Tools
 
-- **Framework**: Next.js (App Router) for file-based routing, SSR/SSG, and API routes.
-- **Language**: TypeScript for type safety.
-- **UI Library**: React 18 for component-based UI.
-- **Styling**: Plain CSS via `globals.css` (global reset) and `theme.css` (sectional styling). Can easily migrate to CSS Modules or Tailwind in the future.
-- **Backend**: Node.js runtime provided by Next.js API routes.
-- **Password Hashing**: bcrypt (npm package).
-- **Session/JWT**: NextAuth.js or custom JWT logic (to be decided in implementation).
-- **IDE & Dev Tools**: VS Code with ESLint, Prettier extensions. Optionally, Cursor.ai for AI-assisted coding.
+- **Frontend**  
+  • Next.js 15 (App Router)  
+  • React & TypeScript  
+  • Tailwind CSS & shadcn/ui  
+  • next-themes (dark/light mode)
 
----
+- **Backend & Database**  
+  • Next.js API Routes (Node.js)  
+  • Better Auth library for sessions  
+  • PostgreSQL  
+  • Drizzle ORM (code-first migrations)
+  
+- **File Handling & Email**  
+  • Formidable (multipart/form-data parsing)  
+  • Nodemailer for email notifications
+
+- **Containerization & Deployment**  
+  • Docker & Docker Compose  
+  • Vercel for production hosting
+
+- **Development & Testing (optional)**  
+  • VS Code (recommend extensions: ESLint, Prettier)  
+  • Jest, React Testing Library for unit tests  
+  • Playwright for end-to-end tests
 
 ## 6. Non-Functional Requirements
 
-- **Performance**: Initial page load under 200 ms on a standard broadband connection. API responses under 300 ms.
-- **Security**:
-  - HTTPS only in production.
-  - Proper CORS, CSRF protection for API routes.
-  - Secure password storage (bcrypt with salt).
-  - No credentials or secrets checked into version control.
-- **Scalability**: Structure must support adding database integration, caching layers, and advanced auth flows without rewiring core app.
-- **Usability**: Forms should give real-time feedback on invalid input. Layout must be responsive (mobile > 320 px).
-- **Maintainability**: Code must adhere to TypeScript strict mode. Linting & formatting enforced by ESLint/Prettier.
+- **Performance**  
+  • Public page load time under 1s on 3G network emulation  
+  • API response times under 200ms for basic CRUD
 
----
+- **Security**  
+  • Enforce HTTPS in production  
+  • Protect against XSS, CSRF, SQL injection  
+  • Secure session cookies (httpOnly, SameSite)
+  
+- **Accessibility & Usability**  
+  • WCAG 2.1 AA compliance for UI components  
+  • Responsive design tested on desktop/mobile/tablet
+
+- **Reliability & Availability**  
+  • 99.9% uptime on Vercel (SLAs)  
+  • Database connection pooling and retry logic
+
+- **Compliance**  
+  • GDPR-friendly handling of contact form data  
+  • Environment variables for secrets and credentials
 
 ## 7. Constraints & Assumptions
 
-- **No Database**: Dashboard uses only `data.json`; real database integration is deferred.
-- **Node Version**: Requires Node.js >= 14.
-- **Next.js Version**: Built on Next.js 13+ App Router.
-- **Authentication**: Assumes availability of bcrypt or NextAuth.js at implementation time.
-- **Hosting**: Targets serverless or Node.js-capable hosting (e.g., Vercel, Netlify).
-- **Browser Support**: Modern evergreen browsers; no IE11 support required.
-
----
+- Better Auth and Drizzle ORM support must be available and up-to-date.  
+- A single admin user is assumed; no role hierarchy in V1.  
+- A PostgreSQL instance (local or hosted) is accessible via environment variables.  
+- Developers will have Docker installed for local setup.  
+- Cloud storage (S3, Cloudinary) credentials will be provided for file uploads.  
+- No external CMS or third-party API rate limits are considered beyond PostgreSQL.
 
 ## 8. Known Issues & Potential Pitfalls
 
-- **Static Data Limitation**: `data.json` is only for demo. A real API or database will be needed to avoid stale data.
-  *Mitigation*: Define a clear interface for data fetching so swapping to a live endpoint is trivial.
+- **SSR Hydration Mismatch**: `next-themes` may cause flicker on initial load.  
+  • Mitigation: use `ThemeProvider` with `enableSystem={false}` and avoid client/component mismatches.
 
-- **Global CSS Conflicts**: Using global styles can lead to unintended overrides.
-  *Mitigation*: Plan to migrate to CSS Modules or utility-first CSS in Phase 2.
+- **Database Migrations**: Drizzle’s code-first migrations require careful version control.  
+  • Mitigation: run `drizzle-kit generate` in CI and review SQL diffs before applying.
 
-- **API Route Ambiguity**: Single `/api/auth/route.ts` handling both sign-up and sign-in could get complex.
-  *Mitigation*: Clearly branch on HTTP method (`POST /register` vs. `POST /login`) or split into separate files.
+- **File Upload Limits**: Large images may exceed default body parser limits.  
+  • Mitigation: set file size limits in Formidable config and handle errors gracefully.
 
-- **Lack of Testing**: No test suite means regressions can slip in.
-  *Mitigation*: Build a minimal Jest + React Testing Library setup in an early iteration.
+- **Docker Performance**: File system volume mounting can be slow on macOS.  
+  • Mitigation: use Docker’s `:delegated` flag or run without mounts in CI.
 
-- **Error Handling Gaps**: Client and server must handle edge cases (network failures, malformed input).
-  *Mitigation*: Define a standard error response schema and show user-friendly messages.
+- **Email Deliverability**: Nodemailer default SMTP may hit spam folders.  
+  • Mitigation: use a reputable email service (SendGrid, Mailgun) with proper DKIM/SPF records.
+
 
 ---
 
-This PRD should serve as the single source of truth for the AI model or any developer generating the next set of technical documents: Tech Stack Doc, Frontend Guidelines, Backend Structure, App Flow, File Structure, and IDE Rules. It contains all functional and non-functional requirements with no ambiguity, enabling seamless downstream development.
+This PRD provides a clear, unambiguous foundation for your Dynamic Portfolio Starter. Subsequent documents (Tech Stack Detail, Frontend Guidelines, Backend Structure, App Flow, File Structure) can be generated directly from these requirements without guesswork.
