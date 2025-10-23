@@ -8,6 +8,7 @@ import { blogPosts } from './blog';
 import { contactMessages } from './contact';
 import { personalInfo } from './personal-info';
 import { siteSettings } from './site-settings';
+import { user, session, account, verification } from './auth';
 import { relations as drizzleRelations } from 'drizzle-orm';
 
 // Export all tables
@@ -22,6 +23,10 @@ export {
   contactMessages,
   personalInfo,
   siteSettings,
+  user,
+  session,
+  account,
+  verification,
 };
 
 // Export all types
@@ -35,6 +40,7 @@ export type { BlogPost, NewBlogPost } from './blog';
 export type { ContactMessage, NewContactMessage } from './contact';
 export type { PersonalInfo, NewPersonalInfo } from './personal-info';
 export type { SiteSetting, NewSiteSetting } from './site-settings';
+export type { user as UserType, session as SessionType, account as AccountType, verification as VerificationType } from './auth';
 
 // Schema object for Drizzle
 export const schema = {
@@ -48,6 +54,10 @@ export const schema = {
   contactMessages,
   personalInfo,
   siteSettings,
+  user,
+  session,
+  account,
+  verification,
 };
 
 // Relations
