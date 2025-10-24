@@ -10,10 +10,10 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
   // Parse pagination parameters
   const paginationParams = commonSchemas.pagination.parse({
-    page: searchParams.get('page'),
-    limit: searchParams.get('limit'),
-    search: searchParams.get('search'),
-    sort: searchParams.get('sort'),
+    page: searchParams.get('page') || undefined,
+    limit: searchParams.get('limit') || undefined,
+    search: searchParams.get('search') || undefined,
+    sort: searchParams.get('sort') || undefined,
   });
 
   const { page, limit, search, sort } = paginationParams;
@@ -45,24 +45,17 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     .from(projects)
     .leftJoin(users, eq(projects.authorId, users.id));
 
-  // Apply filters
-  const conditions = [];
-
   // Only show published projects unless user is authenticated
   const session = await requireAuth(req);
   if (!session) {
-    conditions.push(eq(projects.published, true));
+    query = query.where(eq(projects.published, true));
   }
 
   // Search filter
   if (search) {
-    conditions.push(
+    query = query.where(
       sql`(${ilike(projects.title, `%${search}%`)} OR ${ilike(projects.description, `%${search}%`)})`
     );
-  }
-
-  if (conditions.length > 0) {
-    query = query.where(sql`${conditions.join(' AND ')}`);
   }
 
   // Apply sorting
@@ -70,12 +63,19 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   query = query.orderBy(orderClause);
 
   // Get total count for pagination
-  const countQuery = db
+  let countQuery = db
     .select({ count: sql<number>`count(*)` })
     .from(projects);
 
-  if (conditions.length > 0) {
-    countQuery.where(sql`${conditions.join(' AND ')}`);
+  // Apply the same filters to count query
+  if (!session) {
+    countQuery = countQuery.where(eq(projects.published, true));
+  }
+
+  if (search) {
+    countQuery = countQuery.where(
+      sql`(${ilike(projects.title, `%${search}%`)} OR ${ilike(projects.description, `%${search}%`)})`
+    );
   }
 
   const totalCount = await countQuery;
