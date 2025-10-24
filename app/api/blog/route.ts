@@ -10,10 +10,10 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
   // Parse pagination parameters
   const paginationParams = commonSchemas.pagination.parse({
-    page: searchParams.get('page'),
-    limit: searchParams.get('limit'),
-    search: searchParams.get('search'),
-    sort: searchParams.get('sort'),
+    page: searchParams.get('page') || undefined,
+    limit: searchParams.get('limit') || undefined,
+    search: searchParams.get('search') || undefined,
+    sort: searchParams.get('sort') || undefined,
   });
 
   const { page, limit, search, sort } = paginationParams;
@@ -24,7 +24,10 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const featured = searchParams.get('featured') === 'true';
   const category = searchParams.get('category');
 
-  // Build query
+  // Only show published posts unless user is authenticated
+  const session = await requireAuth(req);
+
+  // Build base query
   let query = db
     .select({
       id: blogPosts.id,
@@ -54,34 +57,26 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     .from(blogPosts)
     .leftJoin(users, eq(blogPosts.authorId, users.id));
 
-  // Apply filters
-  const conditions = [];
-
-  // Only show published posts unless user is authenticated
-  const session = await requireAuth(req);
+  // Apply filters step by step
   if (!session) {
-    conditions.push(eq(blogPosts.published, true));
+    query = query.where(eq(blogPosts.published, true));
   } else if (published) {
-    conditions.push(eq(blogPosts.published, published));
+    query = query.where(eq(blogPosts.published, published));
   }
 
   if (featured) {
-    conditions.push(eq(blogPosts.featured, true));
+    query = query.where(eq(blogPosts.featured, true));
   }
 
   if (category) {
-    conditions.push(eq(blogPosts.category, category));
+    query = query.where(eq(blogPosts.category, category));
   }
 
   // Search filter
   if (search) {
-    conditions.push(
+    query = query.where(
       sql`(${ilike(blogPosts.title, `%${search}%`)} OR ${ilike(blogPosts.excerpt, `%${search}%`)})`
     );
-  }
-
-  if (conditions.length > 0) {
-    query = query.where(sql`${conditions.join(' AND ')}`);
   }
 
   // Apply sorting
@@ -89,12 +84,29 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   query = query.orderBy(orderClause);
 
   // Get total count for pagination
-  const countQuery = db
+  let countQuery = db
     .select({ count: sql<number>`count(*)` })
     .from(blogPosts);
 
-  if (conditions.length > 0) {
-    countQuery.where(sql`${conditions.join(' AND ')}`);
+  // Apply the same filters to count query
+  if (!session) {
+    countQuery = countQuery.where(eq(blogPosts.published, true));
+  } else if (published) {
+    countQuery = countQuery.where(eq(blogPosts.published, published));
+  }
+
+  if (featured) {
+    countQuery = countQuery.where(eq(blogPosts.featured, true));
+  }
+
+  if (category) {
+    countQuery = countQuery.where(eq(blogPosts.category, category));
+  }
+
+  if (search) {
+    countQuery = countQuery.where(
+      sql`(${ilike(blogPosts.title, `%${search}%`)} OR ${ilike(blogPosts.excerpt, `%${search}%`)})`
+    );
   }
 
   const totalCount = await countQuery;
