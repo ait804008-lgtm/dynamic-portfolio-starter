@@ -4,8 +4,8 @@ import { education } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { withErrorHandler, requireAuth, validateMethod, parseRequestBody, createApiResponse, educationSchemas } from '@/lib/api-utils';
 
-export const GET = withErrorHandler(async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
-  const { id } = await context.params;
+export const GET = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params;
 
   const result = await db
     .select()
@@ -19,7 +19,7 @@ export const GET = withErrorHandler(async (req: NextRequest, context: { params: 
   return createApiResponse(result[0]);
 });
 
-export const PUT = withErrorHandler(async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
+export const PUT = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   // Validate method
   const methodValidation = validateMethod(req, ['PUT']);
   if (methodValidation) return methodValidation;
@@ -30,7 +30,7 @@ export const PUT = withErrorHandler(async (req: NextRequest, context: { params: 
     return createApiResponse(null, 'Unauthorized', 401);
   }
 
-  const { id } = await context.params;
+  const { id } = await params;
 
   // Check if education exists and user has permission
   const existingEducation = await db
@@ -69,7 +69,7 @@ export const PUT = withErrorHandler(async (req: NextRequest, context: { params: 
   return createApiResponse(result[0]);
 });
 
-export const DELETE = withErrorHandler(async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
+export const DELETE = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   // Validate method
   const methodValidation = validateMethod(req, ['DELETE']);
   if (methodValidation) return methodValidation;
@@ -80,7 +80,7 @@ export const DELETE = withErrorHandler(async (req: NextRequest, context: { param
     return createApiResponse(null, 'Unauthorized', 401);
   }
 
-  const { id } = await context.params;
+  const { id } = await params;
 
   // Check if education exists and user has permission
   const existingEducation = await db

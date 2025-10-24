@@ -5,8 +5,8 @@ import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { withErrorHandler, requireAuth, validateMethod, parseRequestBody, createApiResponse, projectSchemas } from '@/lib/api-utils';
 
-export const GET = withErrorHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
-  const { id } = params;
+export const GET = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params;
 
   const result = await db
     .select({
@@ -70,7 +70,7 @@ export const GET = withErrorHandler(async (req: NextRequest, { params }: { param
   return createApiResponse(projectWithSkills);
 });
 
-export const PUT = withErrorHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const PUT = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   // Validate method
   const methodValidation = validateMethod(req, ['PUT']);
   if (methodValidation) return methodValidation;
@@ -81,7 +81,7 @@ export const PUT = withErrorHandler(async (req: NextRequest, { params }: { param
     return createApiResponse(null, 'Unauthorized', 401);
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   // Check if project exists and user has permission
   const existingProject = await db
@@ -142,7 +142,7 @@ export const PUT = withErrorHandler(async (req: NextRequest, { params }: { param
   }
 });
 
-export const DELETE = withErrorHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const DELETE = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   // Validate method
   const methodValidation = validateMethod(req, ['DELETE']);
   if (methodValidation) return methodValidation;
@@ -153,7 +153,7 @@ export const DELETE = withErrorHandler(async (req: NextRequest, { params }: { pa
     return createApiResponse(null, 'Unauthorized', 401);
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   // Check if project exists and user has permission
   const existingProject = await db
