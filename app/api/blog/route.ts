@@ -10,10 +10,10 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
   // Parse pagination parameters
   const paginationParams = commonSchemas.pagination.parse({
-    page: searchParams.get('page'),
-    limit: searchParams.get('limit'),
-    search: searchParams.get('search'),
-    sort: searchParams.get('sort'),
+    page: searchParams.get('page') || undefined,
+    limit: searchParams.get('limit') || undefined,
+    search: searchParams.get('search') || undefined,
+    sort: searchParams.get('sort') || undefined,
   });
 
   const { page, limit, search, sort } = paginationParams;
