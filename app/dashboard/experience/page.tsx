@@ -55,7 +55,11 @@ export default function ExperiencePage() {
     try {
       const response = await fetch('/api/experience');
       const data = await response.json();
-      setExperiences(data.data.experience || []);
+      const processedExperiences = (data.data.experience || []).map((exp: any) => ({
+        ...exp,
+        responsibilities: exp.responsibilities ? JSON.parse(exp.responsibilities) : [],
+      }));
+      setExperiences(processedExperiences);
     } catch (error) {
       toast.error('Failed to fetch experiences');
     } finally {
@@ -473,7 +477,7 @@ export default function ExperiencePage() {
               <div className="space-y-4">
                 <p className="text-sm">{experience.description}</p>
 
-                {experience.responsibilities && experience.responsibilities.length > 0 && (
+                {experience.responsibilities && Array.isArray(experience.responsibilities) && experience.responsibilities.length > 0 && (
                   <div>
                     <h4 className="font-medium mb-2">Key Responsibilities:</h4>
                     <ul className="list-disc list-inside space-y-1">
