@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { useSession } from "@/lib/auth-client"
 import {
   IconCamera,
@@ -93,14 +94,15 @@ const staticData = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
-  
+  const pathname = usePathname()
+
   const userData = session?.user ? {
     name: session.user.name || "User",
     email: session.user.email,
     avatar: session.user.image || "/codeguide-logo.png",
   } : {
     name: "Guest",
-    email: "guest@example.com", 
+    email: "guest@example.com",
     avatar: "/codeguide-logo.png",
   }
 
@@ -122,8 +124,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={staticData.navMain} />
-        <NavSecondary items={staticData.navSecondary} className="mt-auto" />
+        <NavMain items={staticData.navMain} currentPath={pathname} />
+        <NavSecondary items={staticData.navSecondary} currentPath={pathname} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />
